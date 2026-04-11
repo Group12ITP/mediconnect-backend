@@ -1,0 +1,8 @@
+{
+	"report": {
+		"created": "report.created"
+	},
+	"common": {
+		"success": "common.success"
+	}
+}

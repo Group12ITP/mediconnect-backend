@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// ====================== SCHEMA ======================
 const doctorSchema = new mongoose.Schema(
   {
     name: {
@@ -67,6 +68,14 @@ const doctorSchema = new mongoose.Schema(
       match: [/^\+?[\d\s-]{10,}$/, "Please add a valid phone number"],
     },
 
+    // ── Extended profile fields (optional, editable by doctor) ──
+    bio: { type: String, default: '', trim: true },
+    location: { type: String, default: '', trim: true },
+    consultationFee: { type: Number, default: 0, min: 0 },
+    education: { type: [String], default: [] },
+    certifications: { type: [String], default: [] },
+    languages: { type: [String], default: [] },
+
     isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     lastLogin: { type: Date, default: null },
@@ -78,8 +87,7 @@ const doctorSchema = new mongoose.Schema(
   }
 );
 
-// ====================== PASSWORD HASHING MIDDLEWARE ======================
-// FIXED for Mongoose 9.x - NO 'next' parameter in async middleware
+// ====================== PASSWORD HASHING ======================
 doctorSchema.pre("save", async function () {
   if (!this.isModified("password")) {
     return;
@@ -91,7 +99,7 @@ doctorSchema.pre("save", async function () {
     );
     this.password = await bcrypt.hash(this.password, salt);
   } catch (error) {
-    throw error;        // Let Mongoose catch and handle the error
+    throw error;
   }
 });
 
@@ -113,4 +121,7 @@ doctorSchema.virtual("doctorCode").get(function () {
   return `DOC${this._id.toString().slice(-6).toUpperCase()}`;
 });
 
-module.exports = mongoose.model("Doctor", doctorSchema);
+// ====================== SAFE MODEL REGISTRATION ======================
+const Doctor = mongoose.models.Doctor || mongoose.model("Doctor", doctorSchema);
+
+module.exports = Doctor;
