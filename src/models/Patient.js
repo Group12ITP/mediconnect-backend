@@ -3,6 +3,28 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Helper function to format phone number to E.164
+const formatToE164 = (phoneNumber) => {
+  if (!phoneNumber) return '';
+
+  // Remove all non-digit characters
+  let cleaned = phoneNumber.toString().replace(/\D/g, '');
+
+  if (!cleaned) return '';
+
+  // Sri Lanka format: 0XX XXXXXXX → +94XX XXXXXXX
+  if (cleaned.startsWith('0') && cleaned.length >= 10) {
+    cleaned = '94' + cleaned.substring(1);
+  }
+
+  // Add + prefix if not present
+  if (!cleaned.startsWith('+')) {
+    cleaned = '+' + cleaned;
+  }
+
+  return cleaned;
+};
+
 // ====================== SCHEMA ======================
 const patientSchema = new mongoose.Schema(
   {
@@ -30,32 +52,24 @@ const patientSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       trim: true,
+      validate: {
+        validator: function(v) {
+          if (!v) return true;
+          return /^\+\d{10,15}$/.test(v);
+        },
+        message: 'Phone number must be in E.164 format (e.g., +94771234567)',
+      },
     },
-    dateOfBirth: {
-      type: Date,
-    },
-    gender: {
-      type: String,
-      enum: ['Male', 'Female', 'Other'],
-    },
+    dateOfBirth: { type: Date },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     bloodGroup: {
       type: String,
       enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''],
       default: '',
     },
-    address: {
-      type: String,
-      trim: true,
-    },
-    // Known chronic conditions or medical history entries
-    medicalConditions: {
-      type: [String],
-      default: [],
-    },
-    allergies: {
-      type: [String],
-      default: [],
-    },
+    address: { type: String, trim: true },
+    medicalConditions: { type: [String], default: [] },
+    allergies: { type: [String], default: [] },
     isActive: { type: Boolean, default: true },
     lastLogin: { type: Date, default: null },
   },
@@ -66,12 +80,21 @@ const patientSchema = new mongoose.Schema(
   }
 );
 
-// ====================== PASSWORD HASHING ======================
+// ====================== MIDDLEWARE ======================
+
+// Password hashing (async - correct modern style)
 patientSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
 
   const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS) || 10);
   this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Phone number formatting (use 'pre' save instead of validate to avoid 'next' issues)
+patientSchema.pre('save', function () {
+  if (this.phoneNumber) {
+    this.phoneNumber = formatToE164(this.phoneNumber);
+  }
 });
 
 // ====================== METHODS ======================
