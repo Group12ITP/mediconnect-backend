@@ -69,7 +69,7 @@ exports.getMyAppointments = async (req, res) => {
 
 exports.cancelAppointment = async (req, res) => {
   try {
-    const apt = await svc.cancelAppointment(req.patient.id, req.params.id);
+    const apt = await svc.cancelAppointment(req.patient.id, req.params.id, req.body.reason);
     res.json({ success: true, data: apt });
   } catch (e) {
     if (e.message === 'NOT_FOUND') return res.status(404).json({ success: false, message: 'Appointment not found' });
@@ -78,6 +78,22 @@ exports.cancelAppointment = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error cancelling appointment' });
   }
 };
+
+exports.rescheduleAppointment = async (req, res) => {
+  try {
+    const { date, time } = req.body;
+    if (!date || !time) return res.status(400).json({ success: false, message: 'date and time are required' });
+    const apt = await svc.rescheduleAppointment(req.patient.id, req.params.id, date, time);
+    res.json({ success: true, data: apt });
+  } catch (e) {
+    if (e.message === 'NOT_FOUND') return res.status(404).json({ success: false, message: 'Appointment not found' });
+    if (e.message === 'CANNOT_RESCHEDULE') return res.status(400).json({ success: false, message: 'Appointment cannot be rescheduled in its current status' });
+    if (e.message === 'SLOT_TAKEN') return res.status(409).json({ success: false, message: 'The selected slot is already booked' });
+    console.error(e);
+    res.status(500).json({ success: false, message: 'Error rescheduling appointment' });
+  }
+};
+
 
 exports.getDoctorRequests = async (req, res) => {
   try {

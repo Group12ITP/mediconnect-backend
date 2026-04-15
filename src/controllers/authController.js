@@ -53,7 +53,7 @@ exports.register = async (req, res) => {
       experience,
       hospital,
       phoneNumber,
-      isVerified: true // In production, set to false and send verification email
+      isVerified: false
     });
 
     // Save the doctor
@@ -119,6 +119,12 @@ exports.login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Your account has been deactivated. Please contact support.'
+      });
+    }
+    if (!doctor.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is pending admin verification.'
       });
     }
 

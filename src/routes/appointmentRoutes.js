@@ -8,12 +8,14 @@ const {
   verifyPayment,
   getMyAppointments,
   cancelAppointment,
+  rescheduleAppointment,
   getDoctorRequests,
   confirmAppointment,
   rejectAppointment,
   completeAppointment,
   getReceipt,
 } = require('../controllers/appointmentController');
+
 const { protectPatient } = require('../middleware/patientAuthMiddleware');
 const { protect } = require('../middleware/authMiddleware'); // doctor auth
 
@@ -27,7 +29,9 @@ router.post('/checkout-session', protectPatient, createCheckoutSession);
 router.get('/verify-payment', verifyPayment); // called after Stripe redirect (no auth needed, session_id is proof)
 router.get('/mine', protectPatient, getMyAppointments);
 router.patch('/:id/cancel', protectPatient, cancelAppointment);
+router.patch('/:id/reschedule', protectPatient, rescheduleAppointment);
 router.get('/:id/receipt', protectPatient, getReceipt);
+
 
 // ── Doctor routes ─────────────────────────────────────────────
 router.get('/requests', protect, getDoctorRequests);
