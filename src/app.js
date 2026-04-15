@@ -20,6 +20,8 @@ const inventoryRoutes = require('./routes/Inventoryroutes');
 const finderRoutes = require('./routes/Finderroutes');
 const brandRoutes = require('./routes/Brandroutes');
 const analyzeReportRoutes = require('./routes/analyzeReportRoutes');
+const adminAuthRoutes = require('./routes/adminAuthRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 
 
@@ -78,6 +80,8 @@ app.use('/api/pharmacy/inventory', inventoryRoutes); // Inventory management
 app.use('/api/finder', finderRoutes);                // Pharmacy finder
 app.use('/api/medicines', brandRoutes);              // Brand scoring/suggestions
 app.use('/api/patient/:patientId/health-reports', analyzeReportRoutes);
+app.use('/api/admin/auth', adminAuthRoutes);         // Admin auth
+app.use('/api/admin', adminRoutes);                  // Admin operations
 
 // Health check
 app.get('/health', (req, res) => {
